@@ -1,17 +1,215 @@
 <!doctype html>
 <html lang="en">
-  <head>
-    <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width,initial-scale=1" />
-    <title>Hello from GitHub Pages</title>
-    <style>
-      body { font-family: system-ui, sans-serif; text-align:center; padding:4rem; background:#f7f7fb; }
-      h1 { color:#333; }
-      p { color:#555; }
-    </style>
-  </head>
-  <body>
-    <h1>It works! 🎉</h1>
-    <p>This is a plain HTML page served via GitHub Pages.</p>
-  </body>
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>notk3nde — CRAZY SITE</title>
+  <style>
+    :root{
+      --bg1:#0f1724; --bg2:#0b1020; --accent:#8b5cf6; --accent2:#06b6d4;
+      --glass: rgba(255,255,255,0.06);
+    }
+    html,body{height:100%;margin:0;font-family:Inter,system-ui,-apple-system,Segoe UI,Roboto,"Helvetica Neue",Arial;}
+    body{
+      background: radial-gradient(1000px 600px at 10% 20%, rgba(139,92,246,0.12), transparent 8%),
+                  radial-gradient(800px 500px at 90% 80%, rgba(6,182,212,0.08), transparent 10%),
+                  linear-gradient(180deg,var(--bg1),var(--bg2));
+      color:#e6eef8; overflow:hidden;
+    }
+    canvas#particles{position:fixed;inset:0;z-index:0;display:block}
+    .container{position:relative;z-index:2;min-height:100vh;display:flex;align-items:center;justify-content:center;padding:4rem;}
+    .card{
+      width:min(980px,94vw); background:linear-gradient(180deg, rgba(255,255,255,0.04), rgba(255,255,255,0.02));
+      border-radius:18px; padding:2.2rem; box-shadow:0 12px 40px rgba(2,6,23,0.6); backdrop-filter: blur(8px);
+      border:1px solid rgba(255,255,255,0.04);
+      display:grid; gap:1rem; grid-template-columns: 1fr 360px;
+      transform-origin:center; transition: transform .25s ease;
+    }
+    .card:hover{ transform: translateY(-6px) rotateX(1deg) }
+    header h1{margin:0;font-size:clamp(1.6rem,3vw,2.4rem); letter-spacing: -0.02em; color: #fff; text-shadow:0 6px 28px rgba(139,92,246,0.12)}
+    p.lead{margin:.4rem 0 0 0;color:#cfe9ffcc}
+    .showcase{padding:1rem;border-radius:12px;background:linear-gradient(180deg, rgba(255,255,255,0.02), transparent); min-height:240px; display:flex;align-items:center;justify-content:center;position:relative;overflow:hidden;}
+    .neon-title{font-weight:700;font-size:1.1rem;padding:.5rem 1rem;border-radius:999px;background:linear-gradient(90deg,var(--accent),var(--accent2)); color:#031025;box-shadow:0 8px 30px rgba(139,92,246,0.16);display:inline-block}
+    .controls{display:flex;flex-direction:column;gap:.75rem;padding-left:1rem}
+    .btn{display:inline-flex;gap:.6rem;align-items:center;padding:.6rem .85rem;border-radius:10px;background:linear-gradient(180deg, rgba(255,255,255,0.03), rgba(0,0,0,0.02));border:1px solid rgba(255,255,255,0.04);cursor:pointer;color:#e8f6ff}
+    .btn.ghost{background:transparent;border:1px dashed rgba(255,255,255,0.06)}
+    footer.small{font-size:.8rem;color:#9fbbe6aa;margin-top:.6rem}
+    /* draggable handle */
+    .drag-handle{position:absolute;right:14px;top:14px;opacity:.9;cursor:grab;padding:.4rem;border-radius:8px;background:rgba(255,255,255,0.02);border:1px solid rgba(255,255,255,0.03)}
+    /* cursor */
+    .cursor-follower{position:fixed;pointer-events:none;z-index:9999;width:30px;height:30px;border-radius:50%;transform:translate(-50%,-50%);mix-blend-mode:screen;transition:width .18s, height .18s, background .12s}
+    .mini{width:10px;height:10px}
+    @media (max-width:900px){ .card{grid-template-columns:1fr; padding:1.3rem} .controls{padding-left:0} }
+  </style>
+</head>
+<body>
+  <canvas id="particles"></canvas>
+  <div class="cursor-follower" id="cursor"></div>
+
+  <main class="container">
+    <section class="card" id="card">
+      <div>
+        <header>
+          <h1><span class="neon-title">notk3nde</span> — CRAZY SITE</h1>
+          <p class="lead">Interactive canvas particles, draggable UI, and neon vibes. Click and drag things. Press "WILD" to go extra.</p>
+        </header>
+
+        <div class="showcase" id="showcase">
+          <div id="center" style="text-align:center;">
+            <h2 style="margin:0;font-size:clamp(1.6rem,3vw,2.8rem)">Make it chaotic ✨</h2>
+            <p style="opacity:.85;color:#cfe9ff;margin-top:.4rem">Hover, click, and drag. Try the button to spawn more particles.</p>
+          </div>
+        </div>
+
+        <footer class="small">
+          Built with plain HTML/CSS/JS — works on GitHub Pages. Tip: enable HTTPS in Settings → Pages.
+        </footer>
+      </div>
+
+      <aside class="controls">
+        <div class="drag-handle" id="handle">☰</div>
+        <div style="display:flex;flex-direction:column;gap:.5rem">
+          <button class="btn" id="btnSpawn">Spawn particles</button>
+          <button class="btn ghost" id="btnClear">Clear</button>
+          <button class="btn" id="btnWild">WILD MODE</button>
+          <label style="margin-top:.4rem;font-size:.85rem;color:#9fbbe6cc">Particle speed</label>
+          <input id="speed" type="range" min="0" max="3" step="0.05" value="1" />
+        </div>
+      </aside>
+    </section>
+  </main>
+
+  <script>
+    // Canvas particles with attraction to mouse
+    const canvas = document.getElementById('particles'), ctx = canvas.getContext('2d');
+    let DPR = Math.max(1, window.devicePixelRatio || 1);
+    function resize() {
+      DPR = Math.max(1, window.devicePixelRatio || 1);
+      canvas.width = innerWidth * DPR; canvas.height = innerHeight * DPR;
+      canvas.style.width = innerWidth + 'px'; canvas.style.height = innerHeight + 'px';
+      ctx.scale(DPR, DPR);
+    }
+    addEventListener('resize', resize); resize();
+
+    const particles = [];
+    const colors = ['#8b5cf6','#06b6d4','#f472b6','#f59e0b'];
+    const rand = (a,b)=> Math.random()*(b-a)+a;
+    let speedFactor = 1;
+
+    class P {
+      constructor(x,y){
+        this.x=x; this.y=y; this.vx=rand(-1,1); this.vy=rand(-1,1);
+        this.size=rand(2,6); this.color=colors[Math.floor(Math.random()*colors.length)];
+      }
+      step(){
+        this.x += this.vx * speedFactor;
+        this.y += this.vy * speedFactor;
+        // wrap
+        if(this.x < -20) this.x = innerWidth + 20;
+        if(this.x > innerWidth+20) this.x = -20;
+        if(this.y < -20) this.y = innerHeight + 20;
+        if(this.y > innerHeight+20) this.y = -20;
+      }
+      draw(){
+        ctx.beginPath();
+        const g = ctx.createRadialGradient(this.x, this.y, 0, this.x, this.y, this.size*6);
+        g.addColorStop(0, this.color+'bb');
+        g.addColorStop(1, this.color+'08');
+        ctx.fillStyle = g;
+        ctx.arc(this.x, this.y, this.size, 0, Math.PI*2);
+        ctx.fill();
+      }
+    }
+
+    function spawn(n=20, x=innerWidth/2, y=innerHeight/2){
+      for(let i=0;i<n;i++) particles.push(new P(x+rand(-40,40), y+rand(-40,40)));
+    }
+    spawn(60);
+
+    let mouse = {x:innerWidth/2, y:innerHeight/2, down:false};
+    addEventListener('pointermove', e => { mouse.x=e.clientX; mouse.y=e.clientY; });
+    addEventListener('pointerdown', e => { mouse.down=true; spawn(8, e.clientX, e.clientY); });
+    addEventListener('pointerup', e => { mouse.down=false; });
+
+    function step(){
+      ctx.clearRect(0,0,innerWidth,innerHeight);
+      // soft overlay glow
+      ctx.globalCompositeOperation = 'lighter';
+      for (let p of particles){
+        // mouse attraction
+        const dx = mouse.x - p.x, dy = mouse.y - p.y;
+        const d = Math.max(10, Math.hypot(dx,dy));
+        p.vx += (dx/d) * 0.06;
+        p.vy += (dy/d) * 0.06;
+        // friction
+        p.vx *= 0.97; p.vy *= 0.97;
+        p.step();
+        p.draw();
+      }
+      // draw connecting lines for fun
+      ctx.globalCompositeOperation = 'source-over';
+      for(let i=0;i<particles.length;i++){
+        for(let j=i+1;j<i+6 && j<particles.length;j++){
+          const a=particles[i], b=particles[j];
+          const d = Math.hypot(a.x-b.x, a.y-b.y);
+          if (d<140){
+            ctx.strokeStyle = 'rgba(140,140,255,' + (0.12 - d/1000) + ')';
+            ctx.lineWidth = 1;
+            ctx.beginPath(); ctx.moveTo(a.x,a.y); ctx.lineTo(b.x,b.y); ctx.stroke();
+          }
+        }
+      }
+      // limit
+      if(particles.length > 1400) particles.splice(0, particles.length - 1200);
+      requestAnimationFrame(step);
+    }
+    step();
+
+    // UI
+    document.getElementById('btnSpawn').onclick = ()=> spawn(80, innerWidth/2 + rand(-200,200), innerHeight/2 + rand(-200,200));
+    document.getElementById('btnClear').onclick = ()=> { particles.length = 0; };
+    document.getElementById('btnWild').onclick = ()=> {
+      spawn(300, innerWidth/2, innerHeight/2); speedFactor = 2.4; setTimeout(()=> speedFactor = 1, 6000);
+      document.body.animate([{filter:'hue-rotate(0deg)'},{filter:'hue-rotate(180deg)'},{filter:'hue-rotate(0deg)'}], {duration:3500});
+    };
+    document.getElementById('speed').oninput = (e)=> { speedFactor = 0.1 + (parseFloat(e.target.value)||1)*1.2; };
+
+    // draggable card
+    (function(){
+      const card = document.getElementById('card'), handle = document.getElementById('handle');
+      let dragging=false, ox=0, oy=0, startX=0, startY=0;
+      handle.addEventListener('pointerdown', (ev)=> {
+        dragging=true; startX=ev.clientX; startY=ev.clientY; ox = card.offsetLeft; oy = card.offsetTop;
+        handle.setPointerCapture(ev.pointerId);
+        handle.style.cursor = 'grabbing';
+      });
+      addEventListener('pointermove', (ev)=> {
+        if(!dragging) return;
+        const dx = ev.clientX - startX, dy = ev.clientY - startY;
+        card.style.position = 'fixed';
+        card.style.left = Math.min(innerWidth - 80, Math.max(20, ox + dx)) + 'px';
+        card.style.top = Math.min(innerHeight - 80, Math.max(20, oy + dy)) + 'px';
+      });
+      addEventListener('pointerup', (ev)=> { dragging=false; handle.releasePointerCapture && handle.releasePointerCapture(ev.pointerId); handle.style.cursor='grab'; });
+    })();
+
+    // cursor follower
+    const cursor = document.getElementById('cursor');
+    let cx=innerWidth/2, cy=innerHeight/2;
+    addEventListener('pointermove', e=> {
+      cursor.style.left = e.clientX + 'px'; cursor.style.top = e.clientY + 'px';
+      cursor.style.background = `radial-gradient(circle at 30% 30%, rgba(255,255,255,0.9), ${colors[Math.floor(Math.random()*colors.length)]}33 40%)`;
+      cursor.classList.remove('mini');
+      clearTimeout(window._cf);
+      window._cf = setTimeout(()=> cursor.classList.add('mini'), 120);
+    });
+    addEventListener('pointerdown', ()=>{ cursor.style.transform = 'translate(-50%,-50%) scale(1.6)'; setTimeout(()=> cursor.style.transform = 'translate(-50%,-50%) scale(1)', 180) });
+
+    // accessibility tip: reduce motion if user prefers
+    const mq = matchMedia('(prefers-reduced-motion: reduce)');
+    if(mq.matches) {
+      particles.length = 40; document.getElementById('speed').value = '0.5';
+    }
+  </script>
+</body>
 </html>
