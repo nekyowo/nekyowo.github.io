@@ -1,0 +1,340 @@
+@font-face {
+    font-family: mono;
+    src: url(../fonts/mono.ttf)
+}
+
+@font-face {
+    font-family: derk;
+    src: url(../fonts/derk.otf)
+}
+
+html {
+    font-family: mono
+}
+
+*, *::after, *::before {
+    box-sizing: inherit;
+    margin: 0;
+    padding: 0
+}
+
+body {
+    background: #0b0b0b;
+}
+
+:root{
+    --accent: #ff2d2d; /* neon red accent */
+    --accent-dim: rgba(255,45,45,0.12);
+    --grade-warm: rgba(255,120,20,0.06);
+}
+
+/* Background video - cover and sit behind content */
+.bg-video{
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    width: auto;
+    height: 120%;
+    min-width: 100vw;
+    min-height: 100vh;
+    transform: translate(-50%,-50%);
+    object-fit: cover;
+    z-index: -3;
+    filter: contrast(1.05) saturate(1.05) brightness(0.92) hue-rotate(-6deg);
+    will-change: transform, filter;
+}
+
+/* Color grade overlay - subtle warm tone */
+.grade{
+    pointer-events: none;
+    background: linear-gradient(180deg, rgba(0,0,0,0.06) 0%, var(--grade-warm) 100%);
+    mix-blend-mode: overlay;
+    opacity: 0.85;
+    z-index: -2;
+}
+
+/* Vignette to focus center */
+.vignette{
+    pointer-events: none;
+    background: radial-gradient(ellipse at center, rgba(0,0,0,0) 35%, rgba(0,0,0,0.78) 100%);
+    mix-blend-mode: multiply;
+    z-index: -1;
+}
+
+/* Film grain effect using repeating gradients and animation */
+.grain{
+    pointer-events: none;
+    background-image: 
+        linear-gradient(rgba(255,255,255,0.035) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255,255,255,0.02) 1px, transparent 1px);
+    background-size: 2px 2px, 2px 2px;
+    opacity: 0.72;
+    mix-blend-mode: overlay;
+    animation: grain-move 5s steps(12) infinite;
+    z-index: 6;
+}
+
+@keyframes grain-move{
+    0%{ transform: translate3d(0,0,0); }
+    50%{ transform: translate3d(-2px,1px,0); }
+    100%{ transform: translate3d(0,0,0); }
+}
+
+/* Glitch overlay: small RGB splits and quick jumps */
+.glitch{ 
+    pointer-events: none;
+    mix-blend-mode: screen;
+    opacity: 0.22;
+    background: linear-gradient(90deg, rgba(255,20,20,0.06), rgba(20,255,200,0.02));
+    background-size: 200% 100%;
+    animation: glitch-flicker 5s infinite linear, glitch-scan 0.18s infinite steps(1);
+    z-index: 7;
+}
+
+@keyframes glitch-flicker{
+    0% { opacity: 0.08; transform: translateX(0); }
+    3% { opacity: 0.25; transform: translateX(6px) skewX(-2deg); }
+    6% { opacity: 0.08; transform: translateX(-4px) skewX(1deg); }
+    100% { opacity: 0.12; transform: translateX(0); }
+}
+
+@keyframes glitch-scan{ 0%{filter: hue-rotate(0deg)} 50%{filter: hue-rotate(40deg) saturate(1.4)} 100%{filter: hue-rotate(0deg)} }
+
+.scanlines{
+    pointer-events: none;
+    background-image: linear-gradient(rgba(0,0,0,0.06) 50%, rgba(255,255,255,0.02) 51%);
+    background-size: 100% 4px;
+    opacity: 0.18;
+    mix-blend-mode: multiply;
+    z-index: 5;
+}
+
+/* Entrance animation flash / RGB split */
+.enter-flash{
+    position: fixed;
+    inset: 0;
+    pointer-events: none;
+    z-index: 200;
+    background: radial-gradient(circle at 50% 40%, rgba(255,255,255,0.95) 0%, rgba(255,255,255,0.6) 20%, rgba(0,0,0,0.0) 50%);
+    opacity: 0;
+    transform: scale(0.96);
+    animation: flash-pop 520ms ease-out forwards;
+}
+
+.enter-rgb{
+    position: fixed;
+    inset: 0;
+    pointer-events: none;
+    z-index: 190;
+    background: linear-gradient(90deg, rgba(255,20,20,0.08), rgba(20,255,200,0.03));
+    mix-blend-mode: screen;
+    opacity: 0;
+    filter: blur(6px);
+    animation: rgb-slam 760ms cubic-bezier(.2,.9,.3,1) forwards;
+}
+
+@keyframes flash-pop{
+    0%{ opacity: 0; transform: scale(0.96); }
+    35%{ opacity: 1; transform: scale(1.03); }
+    100%{ opacity: 0; transform: scale(1.08); }
+}
+
+@keyframes rgb-slam{
+    0%{ opacity: 0; transform: translateY(0) scale(1); filter: hue-rotate(0deg) blur(6px); }
+    30%{ opacity: 0.9; transform: translateY(-6px) scale(1.02); filter: hue-rotate(20deg) blur(2px); }
+    70%{ opacity: 0.6; transform: translateY(2px) scale(1.01); filter: hue-rotate(-8deg) blur(3px); }
+    100%{ opacity: 0; transform: translateY(0) scale(1); filter: hue-rotate(0deg) blur(6px); }
+}
+
+/* Title glitch effect used during entrance */
+.title-glitch{
+    position: relative;
+    display: inline-block;
+    animation: title-jump 820ms cubic-bezier(.2,.9,.3,1) both;
+}
+.title-glitch::before, .title-glitch::after{
+    content: attr(data-text);
+    position: absolute;
+    left: 0; top: 0;
+    width: 100%; height: 100%;
+    pointer-events: none;
+    opacity: 0;
+}
+.title-glitch::before{ color: rgba(255,0,20,0.85); transform: translateX(-6px) skewX(-2deg); mix-blend-mode: screen; }
+.title-glitch::after{ color: rgba(20,200,255,0.75); transform: translateX(6px) skewX(2deg); mix-blend-mode: screen; }
+
+@keyframes title-jump{
+    0%{ transform: scale(0.98) translateY(4px); text-shadow: none; }
+    20%{ transform: scale(1.08) translateY(-12px); }
+    40%{ transform: scale(0.98) translateY(2px); }
+    60%{ transform: scale(1.03) translateY(-6px); }
+    100%{ transform: scale(1.02) translateY(-4px); }
+}
+
+/* small burst lines that briefly appear */
+.burst-lines{
+    position: fixed; inset: 40% 10% 40% 10%; pointer-events: none; z-index: 195; opacity: 0;
+    background-image: linear-gradient(90deg, rgba(255,255,255,0.12), rgba(255,255,255,0));
+    mix-blend-mode: screen; transform: skewX(-8deg) scaleX(0.8);
+    animation: burst 420ms ease-out forwards;
+}
+@keyframes burst{ 0%{opacity:0; transform:scaleX(0.6) skewX(-8deg)} 40%{opacity:1; transform:scaleX(1.2) skewX(-6deg)} 100%{opacity:0; transform:scaleX(1.4) skewX(-4deg)} }
+
+/* Flicker for filmic effect */
+@keyframes flicker{
+    0% { opacity: 1; }
+    3% { opacity: 0.92; }
+    6% { opacity: 0.98; }
+    100% { opacity: 1; }
+}
+
+/* Slight tweaks to headline and socials for the aesthetic */
+.text-content{
+    z-index: 20;
+}
+
+.text-content h1{
+    color: #fff;
+    text-shadow: 0 0 18px rgba(255,40,40,0.18), 0 8px 30px rgba(0,0,0,0.7), 0 0 60px rgba(255,30,30,0.08);
+    font-size: 5rem;
+    letter-spacing: 0.06em;
+    transform-origin: center;
+    transition: transform .6s cubic-bezier(.2,.9,.3,1), text-shadow .6s ease;
+}
+
+.entered .text-content h1{ transform: scale(1.02) translateY(-4px); text-shadow: 0 0 28px rgba(255,40,40,0.28), 0 14px 40px rgba(0,0,0,0.8); }
+
+.socials a{
+    color: #ddd;
+    border: 1px solid rgba(255,255,255,0.03);
+    padding: 10px 14px;
+    margin: 0 8px;
+    transition: all .22s cubic-bezier(.2,.9,.3,1);
+    font-weight: 700;
+    opacity: 0;
+    transform: translateY(8px) scale(.98);
+}
+.entered .socials a{ opacity: 1; transform: translateY(0) scale(1); }
+.socials a:hover{ color: var(--accent); text-shadow: 0 0 0.6em var(--accent); transform: translateY(-4px) scale(1.02);} 
+
+/* interaction states for overlay label */
+.overlay label{ background: rgba(0,0,0,0.45); border: 1px solid rgba(255,255,255,0.03); padding: 20px; border-radius: 8px;}
+
+/* small shake class used by JS */
+.shake{ animation: shake 260ms cubic-bezier(.36,.07,.19,.97) both; }
+@keyframes shake{ 10%{ transform: translateX(-4px) } 30%{ transform: translateX(4px) } 50%{ transform: translateX(-2px) } 70%{ transform: translateX(2px) } 100%{ transform:none } }
+
+#overlay-toggle {
+    position: absolute;
+    display: none
+}
+
+.debold {
+    font-weight: 400
+}
+
+.socials {
+    display: flex;
+    align-items: center;
+    justify-content: center
+}
+
+.overlay {
+    z-index: 40;
+    background-color: #000
+}
+
+.overlay label {
+    display: grid;
+    place-items: center;
+    width: 100vw;
+    height: 100vw;
+    color: #fff;
+    font-size: 2rem
+}
+
+.no-hover {
+    display: block
+}
+
+.hover {
+    display: none
+}
+
+.fullscreen {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    min-height: 100vh;
+    min-width: 100vw
+}
+
+.text-content {
+    background: transparent;
+    display: grid;
+    place-content: center;
+    text-align: center;
+    color: #fff
+}
+
+
+
+.text-content p {
+    padding-top: 30px;
+    padding-right: 10px;
+    padding-bottom: 31px;
+    padding-left: 10px;
+    font-size: 1.7rem;
+    font-weight: 500;
+    line-height: 0;
+    color: silver;
+    display: flex
+}
+
+.text-content a {
+    padding-top: 30px;
+    padding-right: 10px;
+    padding-bottom: 31px;
+    padding-left: 10px;
+    font-size: 1.3rem;
+    line-height: 0;
+    color: #ccc;
+    display: flex
+}
+
+#overlay-toggle:checked~.overlay {
+    animation-fill-mode: forwards;
+    animation-name: fade, hide;
+    animation-delay: 0s, 600ms;
+    animation-duration: 600ms, 1ms
+}
+
+#overlay-toggle:checked~.overlay label {
+    animation-fill-mode: forwards;
+    animation-name: fade;
+    animation-delay: 0s;
+    animation-duration: 500ms
+}
+
+@media(hover:hover) {
+    .hover {
+        display: block
+    }
+
+    .no-hover {
+        display: none
+    }
+}
+
+@keyframes fade {
+    to {
+        opacity: 0
+    }
+}
+
+@keyframes hide {
+    to {
+        visibility: hidden
+    }
+}
